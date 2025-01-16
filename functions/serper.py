@@ -27,3 +27,4 @@ class Serper():
     def scrape(self, url: str):
         response = requests.request("POST", self.scrape_url, headers=self.scrape_headers, data=json.dumps({url}))
         assert response.status_code == 200, f"Error: {response.status_code}"
+        return response
