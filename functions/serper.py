@@ -7,6 +7,10 @@ class Serper():
         self.api_key = api_key
         self.search_url = "https://google.serper.dev/search"
         self.scrape_url = "https://scrape.serper.dev"
+        self.scrape_headers = {
+            'X-API-KEY': self.api_key,
+            'Content-Type': 'application/json'
+        }
 
     def search_google(self, query: str, n_day_lag: int = 1, location: str = "Thailand", language: str = "en"):
         headers = {
