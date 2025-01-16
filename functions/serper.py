@@ -21,3 +21,4 @@ class Serper():
         })
 
         response = requests.request("POST", self.search_url, headers=headers, data=payload)
+        assert response.status_code == 200, f"Error: {response.status_code}"
