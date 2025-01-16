@@ -13,10 +13,6 @@ class Serper():
         }
 
     def search_google(self, query: str, n_day_lag: int = 1, location: str = "Thailand", language: str = "en"):
-        headers = {
-        'X-API-KEY': self.api_key,
-        'Content-Type': 'application/json'
-        }
 
         payload = json.dumps({
             "q": query,
@@ -24,7 +20,7 @@ class Serper():
             "gl": language
         })
 
-        response = requests.request("POST", self.search_url, headers=headers, data=payload)
+        response = requests.request("POST", self.search_url, headers=self.scrape_headers, data=payload)
         assert response.status_code == 200, f"Error: {response.status_code}"
         return response
     
