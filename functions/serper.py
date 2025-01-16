@@ -14,6 +14,9 @@ class Serper():
 
     def search_google(self, query: str, n_day_lag: int = 1, location: str = "Thailand", language: str = "en"):
 
+        # ? subtract n_day_lag from current date, and convert to string
+        start_date = (dt.datetime.now() - dt.timedelta(days=n_day_lag)).strftime("%Y-%m-%d")
+
         payload = json.dumps({
             "q": query,
             "location": location,
