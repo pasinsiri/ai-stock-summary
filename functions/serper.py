@@ -8,5 +8,5 @@ class Serper():
         self.search_url = "https://google.serper.dev/search"
         self.scrape_url = "https://scrape.serper.dev"
 
-    def scrape(query: str, n_day_lag: int = 1):
+    def scrape(query: str, n_day_lag: int = 1, location: str = "Thailand"):
         pass
