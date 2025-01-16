@@ -24,5 +24,5 @@ class Serper():
         assert response.status_code == 200, f"Error: {response.status_code}"
         return response
     
-    def scrape(self):
+    def scrape(self, url: str):
         pass
