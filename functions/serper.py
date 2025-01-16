@@ -15,9 +15,9 @@ class Serper():
         }
 
         payload = json.dumps({
-        "q": query,
-        "location": location,
-        "gl": language
+            "q": query,
+            "location": location,
+            "gl": language
         })
 
         response = requests.request("POST", self.search_url, headers=headers, data=payload)
