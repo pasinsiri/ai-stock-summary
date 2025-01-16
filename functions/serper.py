@@ -25,4 +25,4 @@ class Serper():
         return response
     
     def scrape(self, url: str):
-        pass
+        response = requests.request("POST", self.scrape_url, headers=self.scrape_headers, data=json.dumps({url}))
