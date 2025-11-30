@@ -173,6 +173,7 @@ cython_debug/
 # UV environment
 .python-version
 pyproject.toml
+uv.lock
 
 # Personal files
 note.txt
