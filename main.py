@@ -78,10 +78,11 @@ def main():
                 result = analyze_article(title, content)
                 score = result.get("sentiment_score", 3)
                 summary = result.get("summary", "")
-                ai_tickers = result.get("mentioned_tickers", [])
+                # ai_tickers = result.get("mentioned_tickers", [])
 
             # Combine heuristic + AI tickers
-            for t in set(tickers + ai_tickers):
+            # for t in set(tickers + ai_tickers):
+            for t in set(tickers):
                 ticker_data[t].append({"score": score, "summary": summary})
 
             time.sleep(0.8)  # Be respectful
