@@ -10,7 +10,7 @@ import time
 import sys
 
 # Local imports
-from app.sitemap import get_recent_articles
+from app.sitemap import get_recent_articles_with_tickers
 from app.scraper import scrape_article
 from app.analyzer import analyze_article
 from app.aggregator import generate_insights
