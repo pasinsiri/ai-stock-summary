@@ -62,9 +62,7 @@ def main():
 
         try:
             # Scrape content for AI summary
-            page_title, content = scrape_article(url)  # we don't need scraped tickers anymore
-            # print(f'PAGE TITLE = {page_title}\n')
-            # print(f'PAGE CONTENT = {content}\n\n')
+            page_title, content = scrape_article(url)
 
             if args.dry_run:
                 score = 3
