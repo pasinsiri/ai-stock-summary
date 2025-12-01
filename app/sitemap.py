@@ -1,22 +1,58 @@
+# app/sitemap.py
 import requests
 import xml.etree.ElementTree as ET
+from config.settings import USER_AGENT
+from typing import List, Dict, Optional
 
-def get_recent_articles(max_articles=50):
+def get_recent_articles_with_tickers(max_articles: int = 50) -> List[Dict]:
+    """
+    Fetch recent CNBC articles + their OFFICIAL stock tickers from sitemap.
+    Returns list of dicts: {"url": ..., "tickers": [...], "title": ...}
+    """
     url = "https://www.cnbc.com/sitemap_news.xml"
-    resp = requests.get(url)
-    resp.raise_for_status()
-    
-    root = ET.fromstring(resp.content)
+    headers = {"User-Agent": USER_AGENT}
+
+    response = requests.get(url, headers=headers, timeout=15)
+    response.raise_for_status()
+
+    root = ET.fromstring(response.content)
+
+    # Namespaces
+    ns = {
+        'sm': 'http://www.sitemaps.org/schemas/sitemap/0.9',
+        'news': 'http://www.google.com/schemas/sitemap-news/0.9'
+    }
+
     articles = []
-    ns = {'sm': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
-    
-    for sitemap in root.findall('sm:sitemap', ns):
-        loc = sitemap.find('sm:loc', ns).text
-        if "article" in loc:
-            sub = requests.get(loc).text
-            subroot = ET.fromstring(sub)
-            for url in subroot.findall('sm:url', ns):
-                loc_elem = url.find('sm:loc', ns)
-                if loc_elem is not None:
-                    articles.append(loc_elem.text)
-    return articles[-max_articles:]
+
+    for url_elem in root.findall('sm:url', ns):
+        loc = url_elem.find('sm:loc', ns)
+        if loc is None or loc.text is None:
+            continue
+
+        article_url = loc.text.strip()
+
+        # Extract news block
+        news_elem = url_elem.find('news:news', ns)
+        if news_elem is None:
+            continue
+
+        title_elem = news_elem.find('news:title', ns)
+        title = title_elem.text.strip() if title_elem is not None else "No title"
+
+        tickers_elem = news_elem.find('news:stock_tickers', ns)
+        raw_tickers = tickers_elem.text if tickers_elem is not None and tickers_elem.text else ""
+        tickers = [t.strip().upper() for t in raw_tickers.split(",") if t.strip()]
+
+        # Only include if has tickers (optional: remove this filter if you want all)
+        if tickers:
+            articles.append({
+                "url": article_url,
+                "title": title,
+                "tickers": tickers
+            })
+
+    # Sort by recency (sitemap is usually chronological)
+    recent_articles = articles[-max_articles:]
+    print(f"Fetched {len(recent_articles)} articles with official tickers from sitemap.")
+    return recent_articles
