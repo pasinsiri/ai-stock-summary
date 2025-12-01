@@ -1,9 +1,6 @@
 # app/sitemap.py
-# app/sitemap.py
 import requests
 import xml.etree.ElementTree as ET
-from config.settings import USER_AGENT
-from typing import List, Dict, Optional
 from config.settings import USER_AGENT
 from typing import List, Dict, Optional
 
@@ -13,19 +10,6 @@ def get_recent_articles_with_tickers(max_articles: int = 50) -> List[Dict]:
     Returns list of dicts: {"url": ..., "tickers": [...], "title": ...}
     """
     url = "https://www.cnbc.com/sitemap_news.xml"
-    headers = {"User-Agent": USER_AGENT}
-
-    response = requests.get(url, headers=headers, timeout=15)
-    response.raise_for_status()
-
-    root = ET.fromstring(response.content)
-
-    # Namespaces
-    ns = {
-        'sm': 'http://www.sitemaps.org/schemas/sitemap/0.9',
-        'news': 'http://www.google.com/schemas/sitemap-news/0.9'
-    }
-
     headers = {"User-Agent": USER_AGENT}
 
     response = requests.get(url, headers=headers, timeout=15)
@@ -71,12 +55,4 @@ def get_recent_articles_with_tickers(max_articles: int = 50) -> List[Dict]:
     # Sort by recency (sitemap is usually chronological)
     recent_articles = articles[-max_articles:]
     print(f"Fetched {len(recent_articles)} articles with official tickers from sitemap.")
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     return recent_articles
-=======
-    return recent_articles
->>>>>>> Stashed changes
-=======
-    return recent_articles
->>>>>>> Stashed changes
