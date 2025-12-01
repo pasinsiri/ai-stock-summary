@@ -56,7 +56,11 @@ def get_recent_articles_with_tickers(max_articles: int = 50) -> List[Dict]:
     recent_articles = articles[-max_articles:]
     print(f"Fetched {len(recent_articles)} articles with official tickers from sitemap.")
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     return recent_articles
+=======
+    return recent_articles
+>>>>>>> Stashed changes
 =======
     return recent_articles
 >>>>>>> Stashed changes
