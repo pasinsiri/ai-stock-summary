@@ -1,47 +1,58 @@
+# app/sitemap.py
 import requests
 import xml.etree.ElementTree as ET
 from config.settings import USER_AGENT
-from typing import List
+from typing import List, Dict, Optional
 
-def get_recent_articles(max_articles: int = 50) -> List[str]:
+def get_recent_articles_with_tickers(max_articles: int = 50) -> List[Dict]:
     """
-    Fetch recent article URLs from CNBC's news sitemap.
-    Uses headers to avoid 403 errors.
+    Fetch recent CNBC articles + their OFFICIAL stock tickers from sitemap.
+    Returns list of dicts: {"url": ..., "tickers": [...], "title": ...}
     """
     url = "https://www.cnbc.com/sitemap_news.xml"
-    headers = {
-        "User-Agent": USER_AGENT,
-        "Accept": "application/xml, text/xml",
-        "Accept-Encoding": "gzip, deflate",
-        "Connection": "keep-alive",
-    }
-    
-    try:
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()  # Raises HTTPError for bad status codes
-    except requests.exceptions.HTTPError as e:
-        if response.status_code == 403:
-            raise ValueError(
-                f"403 Forbidden on {url}. Try updating your User-Agent in config/settings.py "
-                "to a real browser string (e.g., 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36...'). "
-                "If persists, CNBC may be rate-limiting your IP—wait 5-10 min or use a VPN."
-            ) from e
-        raise
-    
+    headers = {"User-Agent": USER_AGENT}
+
+    response = requests.get(url, headers=headers, timeout=15)
+    response.raise_for_status()
+
     root = ET.fromstring(response.content)
+
+    # Namespaces
+    ns = {
+        'sm': 'http://www.sitemaps.org/schemas/sitemap/0.9',
+        'news': 'http://www.google.com/schemas/sitemap-news/0.9'
+    }
+
     articles = []
-    ns = {'news': 'http://www.google.com/schemas/sitemap-news/0.9', 'sm': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
-    
-    # CNBC's news sitemap uses <urlset> with <news:news> extensions
-    for url_elem in root.findall('.//sm:url', ns):
-        loc_elem = url_elem.find('sm:loc', ns)
-        if loc_elem is not None and 'cnbc.com' in loc_elem.text:
-            articles.append(loc_elem.text)
-    
-    # Sort by lastmod if available (newest first), then limit
-    if articles:
-        # Simple reverse to get recent (assuming sitemap is chronological)
-        articles = articles[-max_articles:]
-    
-    print(f"Fetched {len(articles)} recent articles from CNBC sitemap.")
-    return articles
+
+    for url_elem in root.findall('sm:url', ns):
+        loc = url_elem.find('sm:loc', ns)
+        if loc is None or loc.text is None:
+            continue
+
+        article_url = loc.text.strip()
+
+        # Extract news block
+        news_elem = url_elem.find('news:news', ns)
+        if news_elem is None:
+            continue
+
+        title_elem = news_elem.find('news:title', ns)
+        title = title_elem.text.strip() if title_elem is not None else "No title"
+
+        tickers_elem = news_elem.find('news:stock_tickers', ns)
+        raw_tickers = tickers_elem.text if tickers_elem is not None and tickers_elem.text else ""
+        tickers = [t.strip().upper() for t in raw_tickers.split(",") if t.strip()]
+
+        # Only include if has tickers (optional: remove this filter if you want all)
+        if tickers:
+            articles.append({
+                "url": article_url,
+                "title": title,
+                "tickers": tickers
+            })
+
+    # Sort by recency (sitemap is usually chronological)
+    recent_articles = articles[-max_articles:]
+    print(f"Fetched {len(recent_articles)} articles with official tickers from sitemap.")
+    return recent_articles
