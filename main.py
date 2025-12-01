@@ -45,49 +45,48 @@ def main():
     print(f"Starting CNBC Sentiment Analysis – processing {args.num_articles} article(s)")
 
     # 1. Fetch article URLs
-    print("Fetching recent articles from sitemap...")
-    try:
-        urls = get_recent_articles(max_articles=args.num_articles * 3)  # fetch extra in case of skips
-        urls = urls[:args.num_articles]
-    except Exception as e:
-        print(f"Failed to fetch sitemap: {e}")
-        sys.exit(1)
-
-    if not urls:
-        print("No articles found!")
-        sys.exit(0)
-
-    print(f"Processing {len(urls)} articles...")
+    print("Fetching articles with official tickers...")
+    articles = get_recent_articles_with_tickers(max_articles=args.num_articles * 2)
+    articles = articles[:args.num_articles]  # Limit exactly
 
     ticker_data = defaultdict(list)
 
-    for i, url in enumerate(urls, 1):
-        print(f"[{i}/{len(urls)}] {url}")
+    for i, article in enumerate(articles, 1):
+        url = article["url"]
+        # official_tickers = article["tickers"]
+        official_tickers = sorted([t for t in article["tickers"] if t[0] != '.']) # ? filter only stocks
+        title = article["title"]
+
+        print(f"[{i}/{len(articles)}] {title}")
+        print(f"   → Official tickers: {', '.join(official_tickers)}")
+
         try:
-            title, content, tickers = scrape_article(url)
-            if not tickers:
-                print("   → No tickers found, skipping")
-                continue
+            # Scrape content for AI summary
+            page_title, content = scrape_article(url)  # we don't need scraped tickers anymore
+            # print(f'PAGE TITLE = {page_title}\n')
+            # print(f'PAGE CONTENT = {content}\n\n')
 
             if args.dry_run:
-                # Fake neutral result for fastest testing
                 score = 3
-                summary = "Dry-run mode – no AI call"
-                ai_tickers = tickers[:3]
+                summary = "Dry-run: no AI call"
             else:
-                result = analyze_article(title, content)
+                print("Calling analyze_article")
+                result = analyze_article(page_title or title, content)
                 score = result.get("sentiment_score", 3)
                 summary = result.get("summary", "")
-                # ai_tickers = result.get("mentioned_tickers", [])
 
-            # Combine heuristic + AI tickers
-            # for t in set(tickers + ai_tickers):
-            for t in set(tickers):
-                ticker_data[t].append({"score": score, "summary": summary})
+            # Use ONLY official tickers from sitemap
+            for ticker in official_tickers:
+                ticker_data[ticker].append({
+                    "score": score,
+                    "summary": summary,
+                    "url": url,
+                    "title": title
+                })
 
-            time.sleep(0.8)  # Be respectful
+            time.sleep(0.8)
         except Exception as e:
-            print(f"   → Error: {e}")
+            print(f"   → Failed: {e}")
 
     if not ticker_data:
         print("No ticker data collected.")
@@ -98,12 +97,12 @@ def main():
     insights = generate_insights(ticker_data)
 
     # 3. Output
-    render_dashboard(insights, len(urls))
+    render_dashboard(insights, len(articles))
     print("Dashboard saved → output/dashboard.html")
 
     if not args.no_discord and not args.dry_run:
         try:
-            send_discord(insights, len(urls))
+            send_discord(insights, len(articles))
             print("Report sent to Discord!")
         except Exception as e:
             print(f"Discord failed: {e}")
